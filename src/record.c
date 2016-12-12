@@ -16,9 +16,9 @@ void RecordInitialize(struct Record** record, int id, char* firstname,
     exit(EXIT_FAILURE);
   }
   (*record)->id = id;
-  strncpy((*record)->firstname, firstname, 15);
-  strncpy((*record)->lastname, lastname, 20);
-  strncpy((*record)->city, city, 25);
+  strncpy((*record)->firstname, firstname, 14);
+  strncpy((*record)->lastname, lastname, 19);
+  strncpy((*record)->city, city, 24);
   (*record)->firstname[14] = '\0';
   (*record)->lastname[19] = '\0';
   (*record)->city[24] = '\0';
