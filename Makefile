@@ -1,7 +1,7 @@
 # Exercise configuration
 
-OBJS =
-LIBS = lib/block$(shell getconf LONG_BIT).o
+STATIC_OBJS =
+EXTENDIBLE_OBJS =
 
 BIN_STATIC = build/static.out
 BIN_EXTENDIBLE = build/extendible.out
@@ -9,12 +9,13 @@ BIN_EXTENDIBLE = build/extendible.out
 # Flags passed to preprocessor and compiler
 
 CPPFLAGS += -iquoteinclude
-CFLAGS += -std=c99 -pedantic-errors -g
+CFLAGS += -std=c99 -pedantic-errors
 ifeq ($(CC), clang)
-	CFLAGS += -Weverything
+	CFLAGS += -Weverything -g
 else
-	CFLAGS += -Wall -Wextra
+	CFLAGS += -Wall -Wextra -g3
 endif
+LDFLAGS += -Llib -lblock$(shell getconf LONG_BIT)
 
 # Build targets
 
@@ -25,8 +26,8 @@ clean :
 
 # Exercise builds
 
-$(BIN_STATIC) : src/main.c $(OBJS) $(LIBS)
-	$(CC) $(CPPFLAGS) -DSTATIC $(CFLAGS) $^ -o $@ $(LDFLAGS)
+$(BIN_STATIC) : src/main.c $(STATIC_OBJS)
+	$(CC) $(CPPFLAGS) -D STATIC -D EXTENDIBLE=0 $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_EXTENDIBLE) : src/main.c $(OBJS) $(LIBS)
-	$(CC) $(CPPFLAGS) -DEXTENDIBLE $(CFLAGS) $^ -o $@ $(LDFLAGS)
+$(BIN_EXTENDIBLE) : src/main.c $(EXTENDIBLE_OBJS)
+	$(CC) $(CPPFLAGS) -D EXTENDIBLE -D STATIC=0 $(CFLAGS) $^ -o $@ $(LDFLAGS)
