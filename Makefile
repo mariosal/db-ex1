@@ -1,7 +1,7 @@
 # Exercise configuration
 
-STATIC_OBJS =
-EXTENDIBLE_OBJS =
+STATIC_OBJS = build/record.o
+EXTENDIBLE_OBJS = build/record.o
 
 BIN_STATIC = build/static.out
 BIN_EXTENDIBLE = build/extendible.out
@@ -25,6 +25,9 @@ clean :
 	$(RM) -r build/*
 
 # Exercise builds
+
+build/record.o : src/record.c include/record.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN_STATIC) : src/main.c $(STATIC_OBJS)
 	$(CC) $(CPPFLAGS) -D STATIC -D EXTENDIBLE=0 $(CFLAGS) $^ -o $@ $(LDFLAGS)
