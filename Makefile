@@ -30,7 +30,7 @@ build/record.o : src/record.c include/record.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN_STATIC) : src/main.c $(STATIC_OBJS)
-	$(CC) $(CPPFLAGS) -D STATIC -D EXTENDIBLE=0 $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CC) $(CPPFLAGS) -D STATIC $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BIN_EXTENDIBLE) : src/main.c $(EXTENDIBLE_OBJS)
-	$(CC) $(CPPFLAGS) -D EXTENDIBLE -D STATIC=0 $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CC) $(CPPFLAGS) -D EXTENDIBLE $(CFLAGS) $^ -o $@ $(LDFLAGS)
