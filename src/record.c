@@ -9,8 +9,8 @@ struct Record {
   char city[25];
 };
 
-void RecordInitialize(struct Record** record, int id, char* firstname,
-                      char* lastname, char* city) {
+void RecordInitialize(struct Record** record, int id, const char* firstname,
+                      const char* lastname, const char* city) {
   *record = malloc(sizeof(struct Record));
   if (*record == NULL) {
     exit(EXIT_FAILURE);

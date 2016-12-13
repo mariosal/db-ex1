@@ -5,8 +5,8 @@
 
 struct Record;
 
-void RecordInitialize(struct Record** record, int id, char* firstname,
-                      char* lastname, char* city);
+void RecordInitialize(struct Record** record, int id, const char* firstname,
+                      const char* lastname, const char* city);
 void RecordReset(struct Record** record);
 
 int RecordPrint(const struct Record* record, FILE* out);
