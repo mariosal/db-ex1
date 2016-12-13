@@ -3,11 +3,17 @@
 
 #include <stdio.h>
 
-struct Record;
+struct Record {
+  int id;
+  char name[15];
+  char surname[20];
+  char city[25];
+};
 
-void RecordInitialize(struct Record** record, int id, const char* firstname,
-                      const char* lastname, const char* city);
-void RecordReset(struct Record** record);
+typedef struct Record Record;
+
+void RecordInitialize(struct Record* record, int id, const char* name,
+                      const char* surname, const char* city);
 
 int RecordPrint(const struct Record* record, FILE* out);
 
