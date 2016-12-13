@@ -9,7 +9,6 @@ struct Record {
   char surname[20];
   char city[25];
 };
-
 typedef struct Record Record;
 
 void RecordInitialize(struct Record* record, int id, const char* name,
