@@ -1,5 +1,5 @@
-#ifndef BLOCK_H_
-#define BLOCK_H_
+#ifndef BF_H_
+#define BF_H_
 
 // Error codes for BF layer
 #define BFE_OK                  0
@@ -28,13 +28,13 @@
 #define BFE_CANNOTDESTROYFILE  -23
 
 // H metavlhth opou kataxwreitai o kwdikos tou teleftaiou sfalmatos
-int BF_Errno;
+extern int BF_Errno;
 
 // Kathorizei to mege8os enos block apo to arxeio
 #define BLOCK_SIZE 512
 
 // Arxikopoiei tin eswterikh plhroforia tin opoia krataei to epipedo block arxeiwn (BF)
-void BF_Init();
+void BF_Init(void);
 
 // Dimiourgei ena neo arxeio epipedou block. An to arxeio yparxei hdh grafetai ek neou apo panw.
 // filename to onoma tou arxeiou pros dimiourgia
@@ -62,7 +62,7 @@ int BF_OpenFile(const char* filename);
 //   0 se periptwsh epityxias.
 //   Enan arnhtiko ari8mo se periptwsh sfalmatos.
 // Mporeite na kalesete thn BF_PrintError() gia na deite to sfalma pou synevh.
-int BF_CloseFile(const int fileDesc);
+int BF_CloseFile(int file_desc);
 
 // Epistrefei to pli8os twn dia8esimwn block pou yparxoun sto arxeio me anagnwristiko ari8mo fileDesc.
 //
@@ -72,7 +72,7 @@ int BF_CloseFile(const int fileDesc);
 //   To synoliko pli8os apo blocks pou yparxoun sto arxeio me anagnwristiko ari8mo fileDesc, se periptwsh epityxias.
 //   Enan arnhtiko ari8mo se periptwsh sfalmatos.
 // Mporeite na kalesete thn BF_PrintError() gia na deite to sfalma pou synevh.
-int BF_GetBlockCounter(const int fileDesc);
+int BF_GetBlockCounter(int file_desc);
 
 // Desmevei ena neo block sto anoixto arxeio epipedou block, me anagnwristiko ari8mo fileDesc.
 // To neo block exei mege8os BLOCK_SIZE kai ola ta bytes tou einai arxikopoihmena se 0.
@@ -85,7 +85,7 @@ int BF_GetBlockCounter(const int fileDesc);
 //   0 se periptwsh epityxous ektelesis.
 //   Enan arnhtiko ari8mo se periptwsh sfalmatos.
 // Mporeite na kalesete thn BF_PrintError() gia na deite to sfalma pou synevh.
-int BF_AllocateBlock(const int fileDesc);
+int BF_AllocateBlock(int file_desc);
 
 // Diavazei ena sygkekrimeno block apo to arxeio epipedou block, me anagnwristiko ari8mo fileDesc.
 // To block pou diavazetai antistoixei sto blockNumber-osto block tou arxeiou,
@@ -100,7 +100,7 @@ int BF_AllocateBlock(const int fileDesc);
 //   0 se periptwsi epityxias
 //   Enan arnhtiko ari8mo se periptwsh sfalmatos.
 // Mporeite na kalesete thn BF_PrintError() gia na deite to sfalma pou synevh.
-int BF_ReadBlock(const int fileDesc, const int blockNumber, void** block);
+int BF_ReadBlock(int file_desc, int block_number, void** block);
 
 // Grafei sto arxeio epipedou block ta dedomena pou yparxoun sto block yp' ari8mon blockNumber,
 // opws afto ziti8ike apo tin BF_ReadBlock, apo to arxeio me anagnwristiko ari8mo anoigmatos fileDesc.
@@ -112,7 +112,7 @@ int BF_ReadBlock(const int fileDesc, const int blockNumber, void** block);
 //   0 se periptwsi epityxias.
 //   Enan arnhtiko ari8mo se periptwsh sfalmatos.
 // Mporeite na kalesete thn BF_PrintError() gia na deite to sfalma pou synevh.
-int BF_WriteBlock(const int fileDesc, const int blockNumber);
+int BF_WriteBlock(int file_desc, int block_number);
 
 // Typwnei to mhnyma message sto standard error, akolou8oumeno apo mia perigrafh tou teleftaiou sfalmatos
 // pou prokli8ike sto BF epipedo.
@@ -120,4 +120,4 @@ int BF_WriteBlock(const int fileDesc, const int blockNumber);
 // message: To mhnyma pros ektypwsh
 void BF_PrintError(const char* message);
 
-#endif  // BLOCK_H_
+#endif  // BF_H_
