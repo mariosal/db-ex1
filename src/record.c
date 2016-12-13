@@ -1,7 +1,5 @@
 #include "record.h"
-#include <stdlib.h>
 #include <string.h>
-
 
 void RecordInitialize(struct Record* record, int id, const char* name,
                       const char* surname, const char* city) {
