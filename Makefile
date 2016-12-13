@@ -1,10 +1,11 @@
 # Exercise configuration
 
-STATIC_OBJS = build/record.o
-EXTENDIBLE_OBJS = build/record.o
+OBJS = build/record.o \
+       build/hash.o
+EXOBJS = build/record.o
 
-BIN_STATIC = build/static.out
-BIN_EXTENDIBLE = build/extendible.out
+BIN = build/hash.out
+EXBIN = build/exhash.out
 
 # Flags passed to preprocessor and compiler
 
@@ -20,7 +21,7 @@ LDFLAGS += -Llib -lblock$(shell getconf LONG_BIT)
 # Build targets
 
 .PHONY = all clean
-all : $(BIN_STATIC) $(BIN_EXTENDIBLE)
+all : $(BIN) $(EXBIN)
 clean :
 	$(RM) -r build/*
 
@@ -29,8 +30,17 @@ clean :
 build/record.o : src/record.c include/record.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BIN_STATIC) : src/main.c $(STATIC_OBJS)
+build/hash.o : src/hash.c include/hash.h include/record.h include/BF.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+build/main.o : src/main.c include/BF.h include/hash.h include/record.h
+	$(CC) $(CPPFLAGS) -D STATIC $(CFLAGS) -c $< -o $@
+
+build/exmain.o : src/main.c include/BF.h
+	$(CC) $(CPPFLAGS) -D EXTENDIBLE $(CFLAGS) -c $< -o $@
+
+$(BIN) : build/main.o $(OBJS)
 	$(CC) $(CPPFLAGS) -D STATIC $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(BIN_EXTENDIBLE) : src/main.c $(EXTENDIBLE_OBJS)
+$(EXBIN) : build/exmain.o $(EXOBJS)
 	$(CC) $(CPPFLAGS) -D EXTENDIBLE $(CFLAGS) $^ -o $@ $(LDFLAGS)
