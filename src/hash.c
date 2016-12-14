@@ -39,8 +39,8 @@ int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
   memcpy(block, &attr_length, sizeof(attr_length));
   block = (char*)block + sizeof(attr_length);
 
-  memcpy(block, attr_name, sizeof(char) * (strlen(attr_name) + 1));
-  block = (char*)block + sizeof(char) * (strlen(attr_name) + 1);
+  memcpy(block, attr_name, sizeof(char) * (attr_length + 1));
+  block = (char*)block + sizeof(char) * (attr_length + 1);
 
   if (BF_WriteBlock(file_desc, 0) < 0) {
     BF_PrintError("Error writing block");
@@ -66,18 +66,53 @@ int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
 
     int free_space = BLOCK_SIZE - sizeof(i) * 2 - sizeof(int);
     memcpy(block, &free_space, sizeof(free_space));
-    block = (char*)block + sizeof(free_space);
 
     if (BF_WriteBlock(file_desc, i) < 0) {
       BF_PrintError("Error writing block");
       return -1;
     }
   }
+
+  if (BF_CloseFile(file_desc) < 0) {
+    BF_PrintError("Error closing file");
+    return -1;
+  }
   return 0;
 }
 
 struct HT_info* HT_OpenIndex(const char* filename) {
-  return NULL;
+  struct HT_info* hash = malloc(sizeof(struct HT_info));
+  if (hash == NULL) {
+    exit(EXIT_FAILURE);
+  }
+
+  hash->file_desc = BF_OpenFile(filename);
+  if (hash->file_desc < 0) {
+    BF_PrintError("Error opening file");
+    return NULL;
+  }
+
+  void* block;
+  if (BF_ReadBlock(hash->file_desc, 0, &block) < 0) {
+    BF_PrintError("Error reading block");
+    return NULL;
+  }
+
+  memcpy(&hash->attr_type, block, sizeof(hash->attr_type));
+  block = (char*)block + sizeof(hash->attr_type);
+
+  memcpy(&hash->file_desc, block, sizeof(hash->file_desc));
+  block = (char*)block + sizeof(hash->file_desc);
+
+  memcpy(&hash->num_buckets, block, sizeof(hash->num_buckets));
+  block = (char*)block + sizeof(hash->num_buckets);
+
+  memcpy(&hash->attr_length, block, sizeof(hash->attr_length));
+  block = (char*)block + sizeof(hash->attr_length);
+
+  hash->attr_name = malloc(sizeof(char) * (hash->attr_length + 1));
+  memcpy(hash->attr_name, block, sizeof(char) * (hash->attr_length + 1));
+  return hash;
 }
 
 int HT_CloseIndex(struct HT_info* hash) {
