@@ -80,6 +80,8 @@ static void BlockInitialize(void* block, int tail) {
   BlockSetNumEntries(block, 0);
 }
 
+int PrintMatchingRecords(void *block, int num_records, void* value, char* attr_name);
+
 int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
                    size_t attr_length, int num_buckets) {
   if (BF_CreateFile(filename) < 0) {
@@ -260,4 +262,35 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
 
 int HT_GetAllEntries(struct HT_info hash, void* value) {
   return 0;
+}
+
+int PrintMatchingRecords(void *block, int num_records, void* value, char* attr_name) {
+// This function will access all the records of a block and priint the matching ones
+// Block is actually pointing at the first record not at the start of the block
+  int count = 0;
+  for (int i = 0; i < num_records; ++i) {
+    int id;
+    memcpy(&id, block, sizeof(id));
+    block = (char*)block + sizeof(id);
+    char name[15];
+    memcpy(name, block, sizeof(char) * (sizeof(name) + 1));
+    block = (char*)block + sizeof(char) * (sizeof(name) + 1);
+    char surname[20];
+    memcpy(surname, block, sizeof(char) * (sizeof(surname) + 1));
+    block = (char*)block + sizeof(char) * (sizeof(surname) + 1);
+    char city[25];
+    memcpy(surname, block, sizeof(char) * (sizeof(city) + 1));
+    block = (char*)block + sizeof(char) * (sizeof(city) + 1);
+    // Block now points at the next record
+    struct Record* record;
+    RecordInitialize(record, id, name, surname, city);
+    // I need some advice on this part
+    if (!strcmp(attr_name, "id")) {
+    } else if (!strcmp(attr_name, "name")) {
+    } else if (!strcmp(attr_name, "surname")) {
+    } else if (!strcmp(attr_name, "city")) {
+    }
+    RecordPrint(record, stdout);
+  }
+  return count;
 }
