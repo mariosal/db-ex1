@@ -204,11 +204,15 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
     head_id = HashFn(&hash, record.city) + 1;
   }
 
+<<<<<<< 3981c9bac5604104679a0d88ae4c67545b27bdbc
   void* head;
   if (BF_ReadBlock(hash.file_desc, head_id, &head) < 0) {
     BF_PrintError("Error reading block");
     return -1;
   }
+=======
+
+>>>>>>> Hash.c: Add Get All Entries
 
   int tail_id = BlockTail(head);
   void* tail;
@@ -261,7 +265,37 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
 }
 
 int HT_GetAllEntries(struct HT_info hash, void* value) {
-  return 0;
+  int bucket = HashFn(&hash, value) + 1;
+  void* block;
+  if (BF_ReadBlock(hash.file_desc, bucket, &block) < 0) {
+    BF_PrintError("Error reading block");
+    return -1;
+  }
+  int blocks_read = 1;
+  int next;
+  memcpy(&next, block, sizeof(next));
+  block = (char*)block + sizeof(next) + sizeof(int);
+
+  int free_space;
+  memcpy(&free_space, block, sizeof(free_space));
+  block = (char*)block + sizeof(free_space);
+  // Instead of free space I should give # of records
+  // I call the PrintMatchingRecords once for the first block (representing the bucket head)
+  // And then once for each overflow block
+  int record_count = PrintMatchingRecords(block, free_space, value, hash.attr_name);
+  while (next > 0) {
+    if (BF_ReadBlock(hash.file_desc, next, &block) < 0) {
+      BF_PrintError("Error reading block");
+      return -1;
+    }
+    blocks_read += 1;
+    memcpy(&next, block, sizeof(next));
+    block = (char*)block + sizeof(next);
+    memcpy(&free_space, block, sizeof(free_space));
+    block = (char*)block + sizeof(free_space);
+    record_count += PrintMatchingRecords(block, free_space, value, hash.attr_name);
+  }
+  return record_count;
 }
 
 int PrintMatchingRecords(void *block, int num_records, void* value, char* attr_name) {
