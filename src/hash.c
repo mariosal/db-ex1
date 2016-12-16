@@ -158,7 +158,7 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
       return -1;
     }
 
-    int newtail_id = BF_GetBlockCounter(hash.file_desc);
+    int newtail_id = BF_GetBlockCounter(hash.file_desc) - 1;
     if (newtail_id < 0) {
       BF_PrintError("Error counting blocks");
       return -1;
