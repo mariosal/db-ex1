@@ -19,6 +19,6 @@ struct HT_info* HT_OpenIndex(const char* filename);
 int HT_CloseIndex(struct HT_info* hash);
 
 int HT_InsertEntry(struct HT_info hash, struct Record record);
-int HT_GetAllEntries(struct HT_info hash, void* value);
+int HT_GetAllEntries(struct HT_info hash, const void* value);
 
 #endif  // HASH_H_
