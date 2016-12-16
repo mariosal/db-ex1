@@ -36,7 +36,7 @@ build/hash.o : src/hash.c include/hash.h include/record.h include/BF.h
 build/main.o : src/main.c include/BF.h include/hash.h include/record.h
 	$(CC) $(CPPFLAGS) -D STATIC $(CFLAGS) -c $< -o $@
 
-build/exmain.o : src/main.c include/BF.h
+build/exmain.o : src/main.c include/BF.h include/exhash.h include/record.h
 	$(CC) $(CPPFLAGS) -D EXTENDIBLE $(CFLAGS) -c $< -o $@
 
 $(BIN) : build/main.o $(OBJS)
