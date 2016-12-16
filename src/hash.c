@@ -5,13 +5,24 @@
 
 int HashFn(const struct HT_info* hash, const void* value);
 
+void BlockInitialize(void* block, int tail);
+void BlockSetTail(void* block, int tail);
+int BlockTail(const void* block);
+void BlockSetNext(void* block, int next);
+int BlockNext(const void* block);
+void BlockSetFreeSpace(void* block, int free_space);
+int BlockFreeSpace(const void* block);
+void BlockSetNumEntries(void* block, int num_entries);
+int BlockNumEntries(const void* block);
+void BlockSetEntry(void* block, int offset, const struct Record* record);
+struct Record* BlockEntry(const void* block, int offset);
+
 int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
                    size_t attr_length, int num_buckets) {
   if (BF_CreateFile(filename) < 0) {
     BF_PrintError("Error creating file");
     return -1;
   }
-
   int file_desc = BF_OpenFile(filename);
   if (file_desc < 0) {
     BF_PrintError("Error opening file");
@@ -22,7 +33,6 @@ int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
     BF_PrintError("Error allocating block");
     return -1;
   }
-
   void* block;
   if (BF_ReadBlock(file_desc, 0, &block) < 0) {
     BF_PrintError("Error reading block");
@@ -43,7 +53,6 @@ int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
 
   memcpy(block, attr_name, sizeof(char) * (attr_length + 1));
   block = (char*)block + sizeof(char) * (attr_length + 1);
-
   if (BF_WriteBlock(file_desc, 0) < 0) {
     BF_PrintError("Error writing block");
     return -1;
@@ -54,25 +63,12 @@ int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
       BF_PrintError("Error allocating block");
       return -1;
     }
-
     if (BF_ReadBlock(file_desc, i, &block) < 0) {
       BF_PrintError("Error reading block");
       return -1;
     }
 
-    memcpy(block, &i, sizeof(int));  // Tail
-    block = (char*)block + sizeof(int);
-
-    memcpy(block, &i, sizeof(int));  // Next
-    block = (char*)block + sizeof(int);
-
-    int free_space = BLOCK_SIZE - sizeof(int) * 4;
-    memcpy(block, &free_space, sizeof(int));
-    block = (char*)block + sizeof(int);
-
-    int num_entries = 0;
-    memcpy(block, &num_entries, sizeof(int));
-
+    BlockInitialize(block, i);
     if (BF_WriteBlock(file_desc, i) < 0) {
       BF_PrintError("Error writing block");
       return -1;
@@ -149,19 +145,14 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
     return -1;
   }
 
-  int tail_id;
-  memcpy(&tail_id, head, sizeof(int));
-
+  int tail_id = BlockTail(head);
   void* tail;
   if (BF_ReadBlock(hash.file_desc, tail_id, &tail) < 0) {
     BF_PrintError("Error reading block");
     return -1;
   }
 
-  int free_space;
-  tail = (char*)tail + sizeof(int) * 2;
-  memcpy(&free_space, tail, sizeof(free_space));
-  if (free_space < sizeof(record)) {
+  if (BlockFreeSpace(tail) < sizeof(record)) {
     if (BF_AllocateBlock(hash.file_desc) < 0) {
       BF_PrintError("Error allocating block");
       return -1;
@@ -173,14 +164,13 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
       return -1;
     }
 
-    memcpy(head, &newtail_id, sizeof(newtail_id));
+    BlockSetTail(head, newtail_id);
     if (BF_WriteBlock(hash.file_desc, head_id) < 0) {
       BF_PrintError("Error writing block");
       return -1;
     }
 
-    tail = (char*)tail - sizeof(int);
-    memcpy(tail, &newtail_id, sizeof(newtail_id));
+    BlockSetNext(tail, newtail_id);
     if (BF_WriteBlock(hash.file_desc, tail_id) < 0) {
       BF_PrintError("Error writing block");
       return -1;
@@ -192,33 +182,12 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
       return -1;
     }
 
-    memcpy(tail, &tail_id, sizeof(int));  // Tail
-    tail = (char*)tail + sizeof(int);
-
-    memcpy(tail, &tail_id, sizeof(int));  // Next
-    tail = (char*)tail + sizeof(int);
-
-    free_space = BLOCK_SIZE - sizeof(int) * 4;
-    memcpy(tail, &free_space, sizeof(int));
-    tail = (char*)tail + sizeof(int);
-
-    int num_entries = 0;
-    memcpy(tail, &num_entries, sizeof(int));
-    tail = (char*)tail - sizeof(int);
+    BlockInitialize(tail, tail_id);
   }
 
-  free_space -= sizeof(record);
-  memcpy(tail, &free_space, sizeof(int));
-  tail = (char*)tail + sizeof(int);
-
-  int num_entries;
-  memcpy(&num_entries, tail, sizeof(int));
-  ++num_entries;
-  memcpy(tail, &num_entries, sizeof(int));
-
-  tail = (char*)tail + sizeof(int) + sizeof(record) * (num_entries - 1);
-  memcpy(tail, &record, sizeof(record));
-
+  BlockSetFreeSpace(tail, BlockFreeSpace(tail) - sizeof(struct Record));
+  BlockSetEntry(tail, BlockNumEntries(tail), &record);
+  BlockSetNumEntries(tail, BlockNumEntries(tail) + 1);
   if (BF_WriteBlock(hash.file_desc, tail_id) < 0) {
     BF_PrintError("Error writing block");
     return -1;
@@ -240,4 +209,69 @@ int HashFn(const struct HT_info* hash, const void* value) {
     return sum % hash->num_buckets;
   }
   return *(const int*)value % hash->num_buckets;
+}
+
+void BlockInitialize(void* block, int tail) {
+  BlockSetTail(block, tail);
+  BlockSetNext(block, -1);
+  BlockSetFreeSpace(block, BLOCK_SIZE - sizeof(int) * 4);
+  BlockSetNumEntries(block, 0);
+}
+
+void BlockSetTail(void* block, int tail) {
+  memcpy(block, &tail, sizeof(int));
+}
+
+int BlockTail(const void* block) {
+  int tail;
+  memcpy(&tail, block, sizeof(int));
+  return tail;
+}
+
+void BlockSetNext(void* block, int next) {
+  block = (char*)block + sizeof(int);
+  memcpy(block, &next, sizeof(int));
+}
+
+int BlockNext(const void* block) {
+  int next;
+  block = (const char*)block + sizeof(int);
+  memcpy(&next, block, sizeof(int));
+  return next;
+}
+
+void BlockSetFreeSpace(void* block, int free_space) {
+  block = (char*)block + sizeof(int) * 2;
+  memcpy(block, &free_space, sizeof(int));
+}
+
+int BlockFreeSpace(const void* block) {
+  int free_space;
+  block = (const char*)block + sizeof(int) * 2;
+  memcpy(&free_space, block, sizeof(int));
+  return free_space;
+}
+
+void BlockSetNumEntries(void* block, int num_entries) {
+  block = (char*)block + sizeof(int) * 3;
+  memcpy(block, &num_entries, sizeof(int));
+}
+
+int BlockNumEntries(const void* block) {
+  int num_entries;
+  block = (const char*)block + sizeof(int) * 3;
+  memcpy(&num_entries, block, sizeof(int));
+  return num_entries;
+}
+
+void BlockSetEntry(void* block, int offset, const struct Record* record) {
+  block = (char*)block + sizeof(int) * 4 + sizeof(struct Record) * offset;
+  memcpy(block, &record, sizeof(struct Record));
+}
+
+struct Record* BlockEntry(const void* block, int offset) {
+  struct Record* record = malloc(sizeof(struct Record));
+  block = (const char*)block + sizeof(int) * 4 + sizeof(struct Record) * offset;
+  memcpy(record, block, sizeof(struct Record));
+  return record;
 }
