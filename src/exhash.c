@@ -117,7 +117,39 @@ int ET_CreateIndex(const char* filename, const char* attr_name, char attr_type,
 }
 
 struct ET_info* ET_OpenIndex(const char* filename) {
-  return NULL;
+  struct ET_info* hash = malloc(sizeof(struct ET_info));
+  if (hash == NULL) {
+    exit(EXIT_FAILURE);
+  }
+
+  hash->file_desc = BF_OpenFile(filename);
+  if (hash->file_desc < 0) {
+    BF_PrintError("Error opening file");
+    return NULL;
+  }
+
+  void* block;
+  if (BF_ReadBlock(hash->file_desc, 0, &block) < 0) {
+    BF_PrintError("Error reading block");
+    return NULL;
+  }
+
+  memcpy(&hash->attr_type, block, sizeof(hash->attr_type));
+  block = (char*)block + sizeof(hash->attr_type);
+
+  memcpy(&hash->file_desc, block, sizeof(hash->file_desc));
+  block = (char*)block + sizeof(hash->file_desc);
+
+  memcpy(&hash->depth, block, sizeof(hash->depth));
+  block = (char*)block + sizeof(hash->num_buckets);
+
+  memcpy(&hash->attr_length, block, sizeof(hash->attr_length));
+  block = (char*)block + sizeof(hash->attr_length);
+
+  hash->attr_name = malloc(sizeof(char) * (hash->attr_length + 1));
+  memcpy(hash->attr_name, block, sizeof(char) * (hash->attr_length + 1));
+
+  return hash;
 }
 
 int ET_CloseIndex(struct ET_info* hash) {
