@@ -153,6 +153,12 @@ struct ET_info* ET_OpenIndex(const char* filename) {
 }
 
 int ET_CloseIndex(struct ET_info* hash) {
+  if (BF_CloseFile(hash->file_desc) < 0) {
+    BF_PrintError("Error closing file");
+    return -1;
+  }
+  free(hash->attr_name);
+  free(hash);
   return 0;
 }
 
