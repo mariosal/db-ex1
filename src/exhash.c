@@ -1,9 +1,9 @@
-#include "hash.h"
+#include "exhash.h"
 #include <stdlib.h>
 #include <string.h>
 #include "BF.h"
 
-int ET_CreateIndex(const char* filename, const char* attr_name, char attr_type,
+int EH_CreateIndex(const char* filename, const char* attr_name, char attr_type,
                    size_t attr_length, int depth) {
   if (BF_CreateFile(filename) < 0) {
     BF_PrintError("Error creating file");
@@ -33,8 +33,8 @@ int ET_CreateIndex(const char* filename, const char* attr_name, char attr_type,
   memcpy(block, &file_desc, sizeof(file_desc));
   block = (char*)block + sizeof(file_desc);
 
-  memcpy(block, &depth, sizeof(num_buckets));
-  block = (char*)block + sizeof(num_buckets);
+  memcpy(block, &depth, sizeof(depth));
+  block = (char*)block + sizeof(depth);
 
   memcpy(block, &attr_length, sizeof(attr_length));
   block = (char*)block + sizeof(attr_length);
@@ -96,7 +96,7 @@ int ET_CreateIndex(const char* filename, const char* attr_name, char attr_type,
     block = (char*)block + sizeof(local_depth);
 
     int num_entries = 0;
-    memcpy =(block, &num_entries, sizeof(num_entries));
+    memcpy(block, &num_entries, sizeof(num_entries));
     block = (char*)block + sizeof(num_entries);
 
     int free_space = BLOCK_SIZE - sizeof(int) * 3  ;
@@ -116,8 +116,8 @@ int ET_CreateIndex(const char* filename, const char* attr_name, char attr_type,
   return 0;
 }
 
-struct ET_info* ET_OpenIndex(const char* filename) {
-  struct ET_info* hash = malloc(sizeof(struct ET_info));
+struct EH_info* EH_OpenIndex(const char* filename) {
+  struct EH_info* hash = malloc(sizeof(struct EH_info));
   if (hash == NULL) {
     exit(EXIT_FAILURE);
   }
@@ -141,7 +141,7 @@ struct ET_info* ET_OpenIndex(const char* filename) {
   block = (char*)block + sizeof(hash->file_desc);
 
   memcpy(&hash->depth, block, sizeof(hash->depth));
-  block = (char*)block + sizeof(hash->num_buckets);
+  block = (char*)block + sizeof(hash->depth);
 
   memcpy(&hash->attr_length, block, sizeof(hash->attr_length));
   block = (char*)block + sizeof(hash->attr_length);
@@ -152,7 +152,7 @@ struct ET_info* ET_OpenIndex(const char* filename) {
   return hash;
 }
 
-int ET_CloseIndex(struct ET_info* hash) {
+int EH_CloseIndex(struct EH_info* hash) {
   if (BF_CloseFile(hash->file_desc) < 0) {
     BF_PrintError("Error closing file");
     return -1;
@@ -162,11 +162,14 @@ int ET_CloseIndex(struct ET_info* hash) {
   return 0;
 }
 
-int ET_InsertEntry(struct ET_info* hash, struct Record record) {
+int EH_InsertEntry(struct EH_info* hash, struct Record record) {
   return 0;
 }
 
-int ET_GetAllEntries(struct ET_info hash, const void* value) {
+int EH_GetAllEntries(struct EH_info hash, const void* value) {
   return 0;
 }
 
+int HashStatistics(const char* filename) {
+  return 0;
+}

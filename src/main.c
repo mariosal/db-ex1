@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
   char attr_name[16];
   strcpy(attr_name, "city");
   int num_buckets = 127;
+  int depth = 1;
   bool create = true;
   for (int i = 1; i < argc; ++i) {
     if (Equals(argv[i], "o")) {
@@ -47,6 +48,9 @@ int main(int argc, char** argv) {
     } else if (Equals(argv[i], "b")) {
       ++i;
       sscanf(argv[i], "%d", &num_buckets);
+    } else if (Equals(argv[i], "d")) {
+      ++i;
+      sscanf(argv[i], "%d", &depth);
     } else if (Equals(argv[i], "nocreate")) {
       create = false;
     }
@@ -57,12 +61,14 @@ int main(int argc, char** argv) {
 #if defined(STATIC) || !defined(EXTENDIBLE)
     HT_CreateIndex(filename, attr_type, attr_name, attr_length, num_buckets);
 #else
+    EH_CreateIndex(filename, attr_name, attr_type, attr_length, depth);
 #endif
   }
 
 #if defined(STATIC) || !defined(EXTENDIBLE)
   struct HT_info* hash = HT_OpenIndex(filename);
 #else
+  struct EH_info* hash = EH_OpenIndex(filename);
 #endif
 
   struct Record record;
@@ -72,6 +78,7 @@ int main(int argc, char** argv) {
 #if defined(STATIC) || !defined(EXTENDIBLE)
     HT_InsertEntry(*hash, record);
 #else
+    EH_InsertEntry(hash, record);
 #endif
   }
 
@@ -79,12 +86,14 @@ int main(int argc, char** argv) {
 #if defined(STATIC) || !defined(EXTENDIBLE)
   HT_GetAllEntries(*hash, value);
 #else
+  EH_GetAllEntries(*hash, value);
 #endif
 
 #if defined(STATIC) || !defined(EXTENDIBLE)
   HT_CloseIndex(hash);
-  HashStatistics(filename);
 #else
+  EH_CloseIndex(hash);
 #endif
+  HashStatistics(filename);
   return 0;
 }
