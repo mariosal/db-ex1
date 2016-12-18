@@ -1,5 +1,10 @@
 # K18 - [Project 1](docs/Assignment.pdf)
 
+## Authors
+
+- Alexandros Kalimeris <sdi1400056@di.uoa.gr>
+- Mario Saldinger <sdi1400177@di.uoa.gr>
+
 ## Requirements
 
 - [GNU Compiler Collection](https://gcc.gnu.org/)
