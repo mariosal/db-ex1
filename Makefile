@@ -2,7 +2,8 @@
 
 OBJS = build/record.o \
        build/hash.o
-EXOBJS = build/record.o
+EXOBJS = build/record.o \
+         build/exhash.o
 
 BIN = build/hash.out
 EXBIN = build/exhash.out
@@ -31,6 +32,9 @@ build/record.o : src/record.c include/record.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 build/hash.o : src/hash.c include/hash.h include/record.h include/BF.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+build/exhash.o : src/exhash.c include/exhash.h include/record.h include/BF.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 build/main.o : src/main.c include/BF.h include/hash.h include/record.h
