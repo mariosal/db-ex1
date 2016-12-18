@@ -20,5 +20,6 @@ int HT_CloseIndex(struct HT_info* hash);
 
 int HT_InsertEntry(struct HT_info hash, struct Record record);
 int HT_GetAllEntries(struct HT_info hash, const void* value);
+int HashStatistics(const char* filename);
 
 #endif  // HASH_H_

@@ -4,6 +4,20 @@
 #include <string.h>
 #include "BF.h"
 
+static int min(int a, int b) {
+  if (a > b) {
+    return b;
+  }
+  return a;
+}
+
+static int max(int a, int b) {
+  if (a < b) {
+    return b;
+  }
+  return a;
+}
+
 static int HashFn(const struct HT_info* hash, const void* value) {
   if (hash->attr_type == 'c') {
     int sum = 0;
@@ -301,4 +315,75 @@ int HT_GetAllEntries(struct HT_info hash, const void* value) {
     next = BlockNext(block);
   } while (next >= 0);
   return count;
+}
+
+int HashStatistics(const char* filename) {
+  struct HT_info* hash = HT_OpenIndex(filename);
+  printf("Blocks: %d\n", BF_GetBlockCounter(hash->file_desc));
+
+  int min_rec = 987654321;
+  int max_rec = -987654321;
+  int count_rec = 0;
+  for (int i = 1; i <= hash->num_buckets; ++i) {
+    int next = i;
+    do {
+      void* block;
+      if (BF_ReadBlock(hash->file_desc, next, &block) < 0) {
+        BF_PrintError("Error reading block");
+        return -1;
+      }
+      min_rec = min(min_rec, BlockNumEntries(block));
+      max_rec = max(max_rec, BlockNumEntries(block));
+      count_rec += BlockNumEntries(block);
+      next = BlockNext(block);
+    } while (next != -1);
+  }
+  printf("Min records in bucket: %d\nAverage records in bucket: %.2lf\n"
+         "Max records in bucket: %d\n", min_rec,
+         (double)count_rec / hash->num_buckets, max_rec);
+
+  int count_blocks = 0;
+  for (int i = 1; i <= hash->num_buckets; ++i) {
+    void* block;
+    if (BF_ReadBlock(hash->file_desc, i, &block) < 0) {
+      BF_PrintError("Error reading block");
+      return -1;
+    }
+
+    ++count_blocks;
+    void* tmp = block;
+    while (BlockNext(tmp) != -1) {
+      if (BF_ReadBlock(hash->file_desc, BlockNext(tmp), &tmp) < 0) {
+        BF_PrintError("Error reading block");
+        return -1;
+      }
+      ++count_blocks;
+    }
+  }
+  printf("Average blocks per bucket: %.2lf\n",
+         (double)count_blocks / hash->num_buckets);
+
+  int count_overflow = 0;
+  for (int i = 1; i <= hash->num_buckets; ++i) {
+    void* block;
+    if (BF_ReadBlock(hash->file_desc, i, &block) < 0) {
+      BF_PrintError("Error reading block");
+      return -1;
+    }
+
+    int overflow_per_bucket = 0;
+    void* tmp = block;
+    while (BlockNext(tmp) != -1) {
+      if (BF_ReadBlock(hash->file_desc, BlockNext(tmp), &tmp) < 0) {
+        BF_PrintError("Error reading block");
+        return -1;
+      }
+      ++overflow_per_bucket;
+    }
+    printf("Bucket %d: %d overflow blocks\n", i, overflow_per_bucket);
+    count_overflow += BlockNext(block) != -1;
+  }
+  printf("Overflowing buckets: %d\n", count_overflow);
+  HT_CloseIndex(hash);
+  return 0;
 }

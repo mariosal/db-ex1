@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
 
 #if defined(STATIC) || !defined(EXTENDIBLE)
   HT_CloseIndex(hash);
+  HashStatistics(filename);
 #else
 #endif
   return 0;
