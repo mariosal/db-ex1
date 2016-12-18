@@ -1,9 +1,9 @@
 #include "hash.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "BF.h"
 
-<<<<<<< 90c72f3cc4fbc76d34a7c4f33c33eba7685fb7ad
 static int HashFn(const struct HT_info* hash, const void* value) {
   if (hash->attr_type == 'c') {
     int sum = 0;
@@ -81,7 +81,34 @@ static void BlockInitialize(void* block, int tail) {
   BlockSetNumEntries(block, 0);
 }
 
-int PrintMatchingEntries(void* block, int num_entries, const void* value, char* attr_name);
+static int PrintMatchingEntries(const struct HT_info* hash, const void* block,
+                                const void* value) {
+  int count = 0;
+  for (int i = 0; i < BlockNumEntries(block); ++i) {
+    struct Record* record = BlockEntry(block, i);
+
+    const char* attr;
+    if (!strcmp(hash->attr_name, "name")) {
+      attr = record->name;
+    } else if (!strcmp(hash->attr_name, "surname")) {
+      attr = record->surname;
+    } else if (!strcmp(hash->attr_name, "city")) {
+      attr = record->city;
+    }
+
+    bool match;
+    if (hash->attr_type == 'i') {
+      match = record->id == *(const int*)value;
+    } else {
+      match = !strcmp(attr, value);
+    }
+    if (match) {
+      RecordPrint(record, stdout);
+    }
+    free(record);
+  }
+  return count;
+}
 
 int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
                    size_t attr_length, int num_buckets) {
@@ -262,69 +289,16 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
 }
 
 int HT_GetAllEntries(struct HT_info hash, const void* value) {
-  int bucket = HashFn(&hash, value) + 1;
-  void* block;
-  if (BF_ReadBlock(hash.file_desc, bucket, &block) < 0) {
-    BF_PrintError("Error reading block");
-    return -1;
-  }
-  int blocks_read = 1;
-  int next;
-
-  block = (char*)block + sizeof(int);
-  memcpy(&next, block, sizeof(next));
-  block = (char*)block + sizeof(int) * 2;
-
-  int num_entries;
-  memcpy(&num_entries, block, sizeof(num_entries));
-  block = (char*)block + sizeof(num_entries);
-
-  int record_count = PrintMatchingEntries(block, num_entries, value, hash.attr_name);
-  while (next > 0) {
+  int next = HashFn(&hash, value) + 1;
+  int count = 0;
+  do {
+    void* block;
     if (BF_ReadBlock(hash.file_desc, next, &block) < 0) {
       BF_PrintError("Error reading block");
       return -1;
     }
-    blocks_read += 1;
-    memcpy(&next, block, sizeof(next));
-    block = (char*)block + sizeof(int) * 2;
-    memcpy(&num_entries, block, sizeof(num_entries));
-    block = (char*)block + sizeof(num_entries);
-    record_count += PrintMatchingEntries(block, num_entries, value, hash.attr_name);
-  }
-  printf("Blocks Read: %d", blocks_read);
-  return record_count;
-}
-
-int PrintMatchingEntries(void* block, int num_entries, const void* value, char* attr_name) {
-// This function will access all the records of a block and print the matching ones
-// Block is actually pointing at the first record not at the start of the block
-  int count = 0;
-  struct Record* record = malloc(sizeof(struct Record));
-  for (int i = 0; i < num_entries; ++i) {
-    memcpy(record, block, sizeof(record));
-    int match = 0;
-    if (!strcmp(attr_name, "id")) {
-      if (record->id == *(int*)value) {
-        match = 1;
-      }
-    } else if (!strcmp(attr_name, "name")) {
-      if (!strcmp(record->name, (char*)value)) {
-        match = 1;
-      }
-    } else if (!strcmp(attr_name, "surname")) {
-      if (!strcmp(record->surname, (char*)value)) {
-        match = 1;
-      }
-    } else if (!strcmp(attr_name, "city")) {
-      if (!strcmp(record->surname, (char*)value)) {
-        match = 1;
-      }
-    }
-    if (match) {
-      RecordPrint(record, stdout);
-    }
-  }
-  free(record);
+    count += PrintMatchingEntries(&hash, block, value);
+    next = BlockNext(block);
+  } while (next >= 0);
   return count;
 }
