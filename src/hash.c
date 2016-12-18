@@ -1,4 +1,5 @@
 #include "hash.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "BF.h"
@@ -78,6 +79,35 @@ static void BlockInitialize(void* block, int tail) {
   BlockSetNext(block, -1);
   BlockSetFreeSpace(block, BLOCK_SIZE - sizeof(int) * 4);
   BlockSetNumEntries(block, 0);
+}
+
+static int PrintMatchingEntries(const struct HT_info* hash, const void* block,
+                                const void* value) {
+  int count = 0;
+  for (int i = 0; i < BlockNumEntries(block); ++i) {
+    struct Record* record = BlockEntry(block, i);
+
+    const char* attr;
+    if (!strcmp(hash->attr_name, "name")) {
+      attr = record->name;
+    } else if (!strcmp(hash->attr_name, "surname")) {
+      attr = record->surname;
+    } else if (!strcmp(hash->attr_name, "city")) {
+      attr = record->city;
+    }
+
+    bool match;
+    if (hash->attr_type == 'i') {
+      match = record->id == *(const int*)value;
+    } else {
+      match = !strcmp(attr, value);
+    }
+    if (match) {
+      RecordPrint(record, stdout);
+    }
+    free(record);
+  }
+  return count;
 }
 
 int HT_CreateIndex(const char* filename, char attr_type, const char* attr_name,
@@ -258,6 +288,17 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
   return 0;
 }
 
-int HT_GetAllEntries(struct HT_info hash, void* value) {
-  return 0;
+int HT_GetAllEntries(struct HT_info hash, const void* value) {
+  int next = HashFn(&hash, value) + 1;
+  int count = 0;
+  do {
+    void* block;
+    if (BF_ReadBlock(hash.file_desc, next, &block) < 0) {
+      BF_PrintError("Error reading block");
+      return -1;
+    }
+    count += PrintMatchingEntries(&hash, block, value);
+    next = BlockNext(block);
+  } while (next >= 0);
+  return count;
 }
