@@ -326,17 +326,19 @@ int HashStatistics(const char* filename) {
   int count_rec = 0;
   for (int i = 1; i <= hash->num_buckets; ++i) {
     int next = i;
+    int bucket_entries = 0;
     do {
       void* block;
       if (BF_ReadBlock(hash->file_desc, next, &block) < 0) {
         BF_PrintError("Error reading block");
         return -1;
       }
-      min_rec = min(min_rec, BlockNumEntries(block));
-      max_rec = max(max_rec, BlockNumEntries(block));
       count_rec += BlockNumEntries(block);
+      bucket_entries += BlockNumEntries(block);
       next = BlockNext(block);
     } while (next != -1);
+    min_rec = min(min_rec, bucket_entries);
+    max_rec = max(max_rec, bucket_entries);
   }
   printf("Min records in bucket: %d\nAverage records in bucket: %.2lf\n"
          "Max records in bucket: %d\n", min_rec,
