@@ -63,7 +63,7 @@ static int BlockNumEntries(const void* block) {
 
 static void BlockSetEntry(void* block, int offset, const struct Record* record) {
   block = (char*)block + sizeof(int) * 4 + sizeof(struct Record) * offset;
-  memcpy(block, &record, sizeof(struct Record));
+  memcpy(block, record, sizeof(struct Record));
 }
 
 static struct Record* BlockEntry(const void* block, int offset) {
@@ -215,7 +215,7 @@ int HT_InsertEntry(struct HT_info hash, struct Record record) {
     return -1;
   }
 
-  if (BlockFreeSpace(tail) < sizeof(record)) {
+  if (BlockFreeSpace(tail) < sizeof(struct Record)) {
     if (BF_AllocateBlock(hash.file_desc) < 0) {
       BF_PrintError("Error allocating block");
       return -1;
