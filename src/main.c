@@ -66,6 +66,7 @@ int main(int argc, char** argv) {
 #endif
 
   struct Record record;
+  memset(&record, 0, sizeof(struct Record));
   while (scanf("%d,\"%14[^\"]\",\"%19[^\"]\",\"%24[^\"]\"", &record.id,
       record.name, record.surname, record.city) == 4) {
 #if defined(STATIC) || !defined(EXTENDIBLE)
